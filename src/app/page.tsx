@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Destinations from "./components/home/routes/Destinations";
 import Landing from "./components/home/Landing/Landing";
 export default function Home() {
