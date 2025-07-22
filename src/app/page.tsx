@@ -1,11 +1,12 @@
 import Image from "next/image";
-
+import Destinations from "./components/home/routes/Destinations";
+import Landing from "./components/home/Landing/Landing";
 export default function Home() {
   return (
     <div className="homepage">
-      <h1>Home</h1>
-      <Image src="/vercel.svg" alt="Vercel Logo" width={100} height={24} />
-    </div>
+      <Landing />
+      <Destinations />
+      </div>
   );
 }
 

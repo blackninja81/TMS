@@ -1,7 +1,7 @@
 // styles/components/_footer.scss
 
 .footer {
-  background-color: #002f6c; // deep blue
+  background-color: #1e90ff; // deep blue
   color: #ffffff;
   padding: 2rem 1rem;
   align-items: center;
@@ -94,7 +94,7 @@
 
     button {
       padding: 0.5rem 1rem;
-      background-color: #1e90ff;
+      background-color: black;
       border: none;
       border-radius: 4px;
       color: #fff;
@@ -111,7 +111,7 @@
     text-align: center;
     margin-top: 2rem;
     font-size: 0.9rem;
-    color: #aaa;
+    color: #ffffff;
   }
   @media (max-width: 950px) {
     &__left, &__contact, &__center, &__center_2, &__right,&__form {
