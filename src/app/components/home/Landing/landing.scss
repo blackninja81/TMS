@@ -10,7 +10,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 4rem 2rem;
-    &::before {
+  &::before {
     content: "";
     position: absolute;
     top: 0;
@@ -20,7 +20,7 @@
     background-color: rgba(0, 0, 0, 0.7); // semi-transparent black
     z-index: 1;
   }
-   > * {
+  > * {
     position: relative;
     z-index: 2;
   }
@@ -53,7 +53,13 @@
 
   &__form {
     flex: 1;
-    background: white;
+    /* From https://css.glass */
+    background: rgba(255, 255, 255, 0);
+    border-radius: 16px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(8.1px);
+    -webkit-backdrop-filter: blur(8.1px);
+
     padding: 2rem;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 86, 179, 0.15);
@@ -64,26 +70,36 @@
       width: 100%;
       margin-top: 2rem;
     }
+    .form-groups {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+      align-items: center;
+    }
     .form-group {
       display: flex;
+      padding: .5rem;
       flex-direction: column;
-      
+
       label {
-          margin-bottom: 0.5rem;
-          font-weight: 600;
-          color: #444;
-        }
-        select{
-          border: none;
-          padding: 1rem;
-          border-radius: 20px;
+        margin-bottom: 1rem;
+        font-weight: 600;
+        font-size: 20px;
+        color: #ffffff;
+      }
+      select {
+        min-width: 20vw;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 10px;
       }
       input {
+        min-width: 20vw;
         padding: 0.75rem;
         border: 1px solid #ccc;
         border-radius: 4px;
         font-size: 1rem;
-        
+
         &:focus {
           border-color: #0056b3;
           outline: none;

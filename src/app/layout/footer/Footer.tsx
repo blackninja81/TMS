@@ -33,13 +33,7 @@ export default function Footer() {
               <Link href="/booking">Booking</Link>
             </li>
             <li>
-              <Link href="/timetable">FAQ</Link>
-            </li>
-            <li>
-              <Link href="/booking">Terms</Link>
-            </li>
-            <li>
-              <Link href="/contact">Privacy</Link>
+              <Link href="/booking">Terms and Conditions</Link>
             </li>
           </ul>
           </div>

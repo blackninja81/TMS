@@ -13,6 +13,7 @@ const Home = () => {
       </div>
 
       <form className="hero__form">
+        <div className="form-groups">
         <div className="form-group">
           <label htmlFor="from">From</label>
           <select id="from" name="from">
@@ -35,17 +36,28 @@ const Home = () => {
             <option value="embu">Embu</option>
           </select>
         </div>
-
-        <div className="form-group">
-          <label htmlFor="date">Departure Date</label>
-          <input type="date" id="date" />
         </div>
 
-        <div className="form-group">
-          <label htmlFor="passengers">Passengers</label>
-          <input type="number" id="passengers" min="1" defaultValue={1} />
+        <div className="form-groups">
+          <div className="form-group">
+            <label htmlFor="date">Departure Date</label>
+            <input type="date" id="date" />
+          </div>
+          <div className="form-group">
+            <label htmlFor="date">Return Date</label>
+            <input type="date" id="date" />
+          </div>
         </div>
-
+        <div className="form-groups">
+          <div className="form-group">
+            <label htmlFor="passengers">Passengers (Adults)</label>
+            <input type="number" id="adults" min="1" defaultValue={1} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="passengers">Passengers (Children)</label>
+            <input type="number" id="children" min="0" defaultValue={0} />
+          </div>
+        </div>
         <button type="submit" className="hero__submit-btn">
           Search Trains
         </button>

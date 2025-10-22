@@ -1,6 +1,6 @@
 .destinations {
   padding: 4rem 2rem;
-  background-color: #f4f7fa;
+  background-color: white;
   text-align: center;
 
   h2 {
@@ -23,10 +23,10 @@
   .card {
     background: white;
     border-radius: 12px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    box-shadow: rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px;
     padding: 1.5rem;
     text-align: center;
-    transition: transform 0.3s;
+    transition: 1s;
 
     img {
       width: 100%;
@@ -56,7 +56,8 @@
     }
 
     &:hover {
-      transform: translateY(-5px);
+      box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+      // transform: translateY(-5px);
     }
   }
 }
