@@ -20,7 +20,7 @@ export default function Navbar() {
   return (
     <header className="navbar">
       <nav className="navbar__container">
-        <div className="navbar__logo">🚆 TrainSys</div>
+        <div className="navbar__logo">🚆 RailEase</div>
 
         <ul className="navbar__links">
           <li><Link href="/">Home</Link></li>
