@@ -6,7 +6,7 @@ const Packages = () => {
     <div className="packages-container">
       <div className="pricingTable">
         <h2 className="pricingTable-title">
-          Find a plan that's right for you.
+          Find a plan that is right for you.
         </h2>
         <p className="pricingTable-subtitle">
           Every plan comes with a 7-day Cancellation Period.
