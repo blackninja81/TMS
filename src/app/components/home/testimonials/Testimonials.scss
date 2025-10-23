@@ -1,0 +1,139 @@
+.testimonials {
+  background: #f9fafb;
+  padding: 5rem 1rem;
+  text-align: center;
+  font-family: "Inter", sans-serif;
+  position: relative;
+  overflow: hidden;
+
+  &__container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  &__heading {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #222;
+    margin-bottom: 3rem;
+    position: relative;
+    display: inline-block;
+
+    // &::after {
+    //   content: "";
+    //   display: block;
+    //   width: 60%;
+    //   height: 3px;
+    //   margin: 0.5rem auto 0;
+    //   background: linear-gradient(90deg, #118ab2, #06d6a0);
+    // }
+  }
+
+  &__slider {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    overflow: hidden;
+    min-height: 260px;
+  }
+
+  .testimonial-card {
+    background: #fff;
+    border-radius: 12px;
+    border-top: 5px solid transparent;
+    padding: 2rem 2.5rem;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    max-width: 650px;
+    opacity: 0;
+    transform: translateY(30px);
+    position: absolute;
+    transition: all 0.7s ease;
+
+    &.active {
+      opacity: 1;
+      transform: translateY(0);
+      position: relative;
+    }
+  }
+
+  .testimonial-quote {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: #444;
+    margin-bottom: 1.8rem;
+    font-style: italic;
+  }
+
+  .testimonial-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    justify-content: center;
+
+    .avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      color: #fff;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .testimonial-name {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #222;
+    }
+
+    .testimonial-role {
+      font-size: 0.9rem;
+      color: #666;
+    }
+  }
+
+  &__dots {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+    gap: 0.6rem;
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ccc;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+
+      &.active {
+        background: #118ab2;
+        width: 25px;
+        border-radius: 10px;
+      }
+
+      &:hover {
+        background: #06d6a0;
+      }
+    }
+  }
+
+  @media (max-width: 600px) {
+    &__heading {
+      font-size: 1.8rem;
+    }
+
+    .testimonial-card {
+      padding: 1.5rem;
+    }
+
+    .testimonial-quote {
+      font-size: 1rem;
+    }
+  }
+}

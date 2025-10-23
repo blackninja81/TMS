@@ -80,7 +80,7 @@
     animation: fadeInUp 0.8s ease-out 0.4s backwards;
 
     @media (max-width: 768px) {
-      width: 100%;
+      width: 90%;
       margin-top: 2rem;
       padding: 1.5rem;
     }
@@ -114,7 +114,7 @@
 
       select,
       input {
-        width: 100%;
+        width: 90%;
         border: 2px solid transparent;
         padding: 1rem;
         border-radius: 12px;
