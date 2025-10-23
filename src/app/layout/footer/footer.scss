@@ -1,7 +1,8 @@
 // styles/components/_footer.scss
+@import '../../colors.scss';
 
 .footer {
-  background-color: #1e90ff; // deep blue
+  background-color: $primary-600;
   color: #ffffff;
   padding: 2rem 1rem;
   align-items: center;
