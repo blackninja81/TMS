@@ -1,47 +1,719 @@
-Complete List of Proposals for TrainSys:
-Visual Identity:
+================================================================================
+RAILEASE: BUSINESS LOGIC FOCUS - BOOKING & PAYMENTS
+================================================================================
 
-Add personality beyond "Bootstrap template" look
-Try warmer color palette (consider Kenya's flag colors subtly)
-Experiment with different typography - current font too generic
-Add unique visual elements - custom icons, illustrations, graphics (not stock)
+This document outlines the core business logic you need to build for a 
+production train booking system, focusing on booking flow and payment 
+processing without getting distracted by other features.
 
-Hero Section:
+TABLE OF CONTENTS
+-----------------
+1. Booking Flow - The Critical Path
+2. Payment Integration - The Money Part
+3. Cancellation & Refunds
+4. State Management & Error Handling
+5. Testing Strategy
+6. Priority Roadmap
+7. Key Technologies Needed
 
-Style booking form dropdowns - currently look too basic
-Add micro-interactions (hover states, smooth transitions)
-Make form feel more premium with better styling
-Add "Recent searches" or "Popular routes" suggestions
 
-Content Depth:
+================================================================================
+1. BOOKING FLOW - THE CRITICAL PATH
+================================================================================
 
-Add "Why Choose TrainSys" section - features, benefits, testimonials
-Include pricing preview - even fake prices help users understand value
-Add journey details - estimated times, amenities, seat types
-Include trust signals - security badges, customer reviews, booking guarantee
+This is where the complexity lives. Every step must be bulletproof because 
+real money and real seats are involved.
 
-Popular Destinations:
+-------------------------------------------------------------------------------
+A. SEARCH & AVAILABILITY (WEEK 1-2)
+-------------------------------------------------------------------------------
 
-Make cards more interactive - better hover effects
-Add more details: journey time, price ranges, train frequency
-Consider carousel or grid toggle for more destinations
+What You're Building:
+Users search for trains by entering origin, destination, date, and number of 
+passengers. The system returns available trains with pricing and seat counts.
 
-Technical Polish:
+Key Data Structures:
+- Search parameters: origin, destination, dates, passenger counts by type
+- Train availability: route info, schedule, available seats per class, pricing
+- Must handle different passenger types: adults, children, seniors
 
-Ensure mobile responsiveness - especially booking form on phones
-Add loading states - what happens when "Search Trains" is clicked
-Include error handling - what if no routes found
+Critical Business Logic:
+- Query trains matching the route and date
+- Check real-time seat availability across all classes
+- Calculate pricing based on passenger types (children get discounts, etc.)
+- Handle dynamic pricing if applicable (peak times, demand)
+- Filter and sort results by time, price, or duration
+- Support return/round-trip searches
 
-Advanced Additions:
+Edge Cases to Handle:
+- No trains available for selected route/date
+- Partial availability (some classes full, others available)
+- Multi-leg journeys (if supporting connecting trains)
+- Different fare types (flexible, non-refundable, etc.)
 
-Journey planner/route map
-Seat selection interface
-User account/booking history section
-FAQ section about train travel
-Blog section for travel guides
+Performance Considerations:
+- Database queries must be indexed properly
+- Implement caching for frequently searched routes
+- Debounce search inputs to avoid excessive API calls
+- Use pagination or infinite scroll for large result sets
 
-Key Focus Areas:
+-------------------------------------------------------------------------------
+B. SEAT SELECTION (WEEK 2-3)
+-------------------------------------------------------------------------------
 
-Micro-interactions - make it feel alive
-Information design - present complex travel data clearly
-Form UX - nail booking flows
+What You're Building:
+Visual seat map showing available, reserved, and occupied seats. Users select 
+seats for each passenger. Selected seats are temporarily reserved during checkout.
+
+Key Data Structures:
+- Seat map: carriage layout, rows, configuration
+- Individual seat: number, type (window/aisle), status, features, price
+- Reservation: links seats to user with expiration timestamp
+
+THE CRITICAL PART - Seat Reservation with Timeout:
+This is where most hobby projects fail. You cannot simply mark a seat as 
+"selected" in the frontend. You must:
+
+1. Reserve seats on the backend with a database transaction
+2. Use row-level locking to prevent concurrent reservations
+3. Set an expiration time (typically 10 minutes)
+4. Start a background job that automatically releases expired reservations
+5. Show countdown timer to user
+6. Handle the case where seats become unavailable during selection
+
+Race Condition Prevention:
+When 100 people are trying to book the same train:
+- Use database transactions with SELECT FOR UPDATE
+- Implement optimistic locking with version numbers
+- Check seat availability again before confirming
+- Return clear error messages if seats are taken
+- Offer alternative seats automatically
+
+Reservation Expiration System:
+- Create reservation with 10-minute timeout
+- Background job runs every minute checking for expired reservations
+- Automatically release seats if booking not completed
+- Send warning notifications at 2 minutes remaining
+- Allow extension if user is actively in checkout
+
+Seat Selection UX:
+- Visual representation of train carriage
+- Color coding: green (available), yellow (reserved by you), gray (unavailable)
+- Show seat features: extra legroom, power outlets, tables
+- Allow seat type preferences: window, aisle, together
+- Auto-assign seats option for quick booking
+
+-------------------------------------------------------------------------------
+C. PASSENGER INFORMATION (WEEK 3)
+-------------------------------------------------------------------------------
+
+What You're Building:
+Forms to collect passenger details for each ticket. Different requirements 
+based on route, ticket type, and regulations.
+
+Key Data Collected:
+- Personal info: first name, last name, date of birth
+- Age calculation and validation against ticket type
+- Gender (optional, for some routes)
+- Nationality (for international routes)
+- Document info: passport or ID number
+- Seat assignment per passenger
+- Special requirements: wheelchair access, meal preferences, assistance
+
+Validation Rules:
+- All passenger data validated client-side AND server-side
+- Age automatically calculated from date of birth
+- Ticket type must match age (child under 12, senior over 60)
+- Names must match travel documents
+- Document numbers validated by format
+- Special characters handled properly in names
+- Maximum character limits enforced
+
+Data Security:
+- Personally Identifiable Information (PII) must be encrypted at rest
+- Use HTTPS for all transmission
+- Don't store document numbers unless legally required
+- Implement data retention policies
+- Log access to passenger data for audit trails
+
+Multi-Passenger Handling:
+- Support 1-9 passengers per booking
+- Allow copying details from primary passenger
+- Validate seat assignments match passenger count
+- Different forms for adults vs children (less info for kids)
+- Group handling: keep families together
+
+
+================================================================================
+2. PAYMENT INTEGRATION - THE MONEY PART
+================================================================================
+
+This is where you make or lose money. Must be absolutely reliable and secure.
+
+-------------------------------------------------------------------------------
+CHOOSING A PAYMENT PROCESSOR
+-------------------------------------------------------------------------------
+
+Recommended: Stripe
+Why: Best developer experience, excellent documentation, handles PCI compliance, 
+supports multiple payment methods, robust webhook system, test mode for development.
+
+Alternative: PayPal
+If targeting markets where PayPal is dominant or Stripe isn't available.
+
+NEVER build your own payment processing. NEVER handle raw card data.
+
+-------------------------------------------------------------------------------
+PAYMENT FLOW ARCHITECTURE
+-------------------------------------------------------------------------------
+
+The Standard Flow (6 Steps):
+
+Step 1: Create Pending Booking
+When user completes passenger info, create booking record with status "pending".
+Store all booking details but don't confirm seats yet.
+
+Step 2: Calculate Final Amount
+- Subtotal: base fare × passengers with discounts applied
+- Taxes: calculated based on route and local regulations
+- Service fees: your booking fee
+- Total: sum of above
+- Currency: based on origin country or user preference
+
+Step 3: Create Payment Intent (Backend)
+- Call Stripe API to create Payment Intent
+- Pass booking amount and currency
+- Store booking ID in payment metadata
+- Receive client secret for frontend
+- Store payment intent ID in booking record
+
+Step 4: User Completes Payment (Frontend)
+- Show Stripe-hosted payment form
+- User enters card details (Stripe handles security)
+- Submit payment through Stripe
+- Stripe processes payment
+- User redirected to confirmation page
+
+Step 5: Webhook Confirms Payment (Backend)
+- Stripe sends webhook to your server
+- Verify webhook signature (security)
+- Check payment status
+- Confirm booking if payment succeeded
+- Release seats if payment failed
+
+Step 6: Confirm Booking Atomically (Backend)
+- Start database transaction
+- Update booking status to "confirmed"
+- Update seat reservations to "confirmed"
+- Mark seats as occupied
+- Generate booking reference number
+- Commit transaction
+- Send confirmation email
+- Generate PDF ticket
+
+-------------------------------------------------------------------------------
+CRITICAL PAYMENT IMPLEMENTATION DETAILS
+-------------------------------------------------------------------------------
+
+Atomic Operations:
+Everything in Step 6 must happen as one atomic transaction. If any part fails, 
+everything rolls back. You cannot have a confirmed payment with unconfirmed 
+seats or vice versa.
+
+Webhook Security:
+- Verify Stripe webhook signature on every request
+- Reject webhooks with invalid signatures
+- Use webhook secret from Stripe dashboard
+- Log all webhook attempts for debugging
+
+Idempotency:
+Webhooks may be sent multiple times. Your handler must be idempotent:
+- Check if booking already processed before taking action
+- Use payment intent ID as idempotency key
+- Don't send duplicate confirmation emails
+- Log duplicate webhook attempts
+
+Handling Payment Failures:
+- Release seat reservations immediately
+- Update booking status to "failed"
+- Show clear error message to user
+- Offer to retry or select different seats
+- Log failure reason for analysis
+
+Refund Processing:
+- Refunds processed through Stripe API
+- Partial refunds supported (cancellation fees)
+- Update booking status to include refund amount
+- Webhook confirms refund completion
+- Send refund confirmation email
+
+Currency Handling:
+- Store amounts as integers (cents/pence) to avoid floating point errors
+- Support multiple currencies if operating internationally
+- Handle currency conversion if needed
+- Display currency symbols correctly
+- Round correctly per currency rules (JPY has no decimals)
+
+-------------------------------------------------------------------------------
+PAYMENT SECURITY CHECKLIST
+-------------------------------------------------------------------------------
+
+□ Never store credit card numbers
+□ Use Stripe Elements or hosted checkout
+□ Implement webhook signature verification
+□ Use HTTPS for all payment pages
+□ Validate amounts server-side (don't trust frontend)
+□ Implement rate limiting on payment endpoints
+□ Log all payment attempts for fraud detection
+□ Monitor for suspicious patterns
+□ Implement 3D Secure for European cards
+□ Handle Strong Customer Authentication (SCA) requirements
+□ Set up fraud detection rules in Stripe
+□ Implement address verification (AVS)
+□ Require CVV for all transactions
+
+
+================================================================================
+3. CANCELLATION & REFUNDS
+================================================================================
+
+Users will cancel bookings. You need a clear, automated system.
+
+-------------------------------------------------------------------------------
+CANCELLATION POLICY
+-------------------------------------------------------------------------------
+
+Typical Structure (Tiered by Time):
+- 30+ days before travel: 100% refund, no fee
+- 14-29 days before: 80% refund, $5 fee
+- 7-13 days before: 50% refund, $10 fee
+- 1-6 days before: 25% refund, $15 fee
+- Day of travel: No refund
+
+Policy Variations:
+- Different tiers for different ticket classes
+- Flexible tickets: more generous refunds
+- Non-refundable tickets: no refunds but allow changes
+- Group bookings: different rules
+- Emergency cancellations: manual review
+
+-------------------------------------------------------------------------------
+CANCELLATION FLOW
+-------------------------------------------------------------------------------
+
+Step 1: User Requests Cancellation
+- User clicks "Cancel Booking" in their account
+- Show cancellation policy and refund amount
+- Require cancellation reason (dropdown + text)
+- Ask for confirmation
+
+Step 2: Validate Cancellation Request
+- Check user owns the booking
+- Verify booking not already cancelled
+- Check if within cancellation window
+- Calculate refund amount based on policy
+- Check if any seats already used (partial travel)
+
+Step 3: Calculate Refund Amount
+- Determine days until travel date
+- Apply appropriate policy tier
+- Subtract cancellation fee
+- Account for promotional discounts
+- Calculate final refund amount
+
+Step 4: Process Cancellation
+- Start database transaction
+- Update booking status to "cancelled"
+- Record cancellation timestamp and reason
+- Record refund amount
+- Release all seats (mark as available)
+- Delete seat reservations
+- Commit transaction
+
+Step 5: Process Refund
+- Create refund through Stripe API
+- Reference original payment intent
+- Include booking ID in metadata
+- Wait for refund webhook confirmation
+
+Step 6: Notify User
+- Send cancellation confirmation email
+- Include refund amount and timeline
+- Provide cancellation reference number
+- Explain refund processing time (5-10 business days)
+
+-------------------------------------------------------------------------------
+EDGE CASES FOR CANCELLATIONS
+-------------------------------------------------------------------------------
+
+Partial Cancellations:
+- User cancels only some passengers from booking
+- Recalculate pricing (group discounts may change)
+- Process partial refund
+- Keep booking active for remaining passengers
+
+No-Show Handling:
+- User doesn't board train
+- Mark booking as "completed" but unused
+- No automatic refund
+- Allow manual review for special circumstances
+
+Train Cancellations (Operator's Fault):
+- Automatic 100% refund
+- Proactive email to all affected passengers
+- Offer rebooking on next available train
+- Potential compensation per regulations
+
+Technical Failures During Cancellation:
+- Payment refund fails but booking cancelled
+- Booking cancel fails but refund processed
+- Must have reconciliation process
+- Manual review queue for failures
+
+
+================================================================================
+4. STATE MANAGEMENT & ERROR HANDLING
+================================================================================
+
+Managing booking state across multiple steps is complex. Poor state management 
+leads to bugs, lost bookings, and confused users.
+
+-------------------------------------------------------------------------------
+BOOKING STATE MACHINE
+-------------------------------------------------------------------------------
+
+States a Booking Can Be In:
+1. draft - User searching, no data saved
+2. seats_selected - Seats temporarily reserved
+3. passenger_info - User entering details
+4. payment_pending - Payment intent created, awaiting payment
+5. payment_processing - Payment submitted, waiting for confirmation
+6. confirmed - Payment successful, booking complete
+7. failed - Payment failed
+8. cancelled - User cancelled booking
+9. expired - Reservation timeout, booking abandoned
+10. completed - Travel date passed
+
+State Transitions:
+- Only certain transitions are valid
+- Track state change timestamps
+- Log reason for each transition
+- Prevent invalid state changes
+- Handle concurrent state changes
+
+-------------------------------------------------------------------------------
+ERROR HANDLING STRATEGY
+-------------------------------------------------------------------------------
+
+User-Facing Errors (Show Clear Messages):
+- "Selected seats no longer available. Please choose different seats."
+- "Payment failed. Please check your card details and try again."
+- "Booking session expired. Please search again."
+- "This route is fully booked for the selected date."
+
+Technical Errors (Log and Monitor):
+- Database connection failures
+- Payment gateway timeouts
+- Webhook processing errors
+- Email sending failures
+- PDF generation issues
+
+Recovery Strategies:
+- Automatic retry for transient failures
+- Fallback to alternative payment methods
+- Save user progress (don't lose passenger info)
+- Allow resuming abandoned bookings
+- Provide support contact for stuck bookings
+
+Validation Errors:
+- Show inline on form fields
+- Highlight specific problems
+- Suggest corrections
+- Prevent submission until fixed
+- Re-validate on server
+
+Timeout Handling:
+- Show countdown timer during seat reservation
+- Warning at 2 minutes remaining
+- Auto-release and notify on expiration
+- Allow extending timeout if still active
+- Save progress so user can restart
+
+
+================================================================================
+5. TESTING STRATEGY
+================================================================================
+
+You cannot ship a payment system without comprehensive testing.
+
+-------------------------------------------------------------------------------
+UNIT TESTS
+-------------------------------------------------------------------------------
+
+Test Business Logic Functions:
+- Price calculation with various passenger combinations
+- Refund calculation for different cancellation scenarios
+- Age validation and ticket type matching
+- Seat availability checking
+- Reservation timeout logic
+- Booking reference generation
+
+Test Edge Cases:
+- Zero passengers (should fail)
+- Too many passengers (should fail)
+- Negative prices (should fail)
+- Invalid dates (past dates, far future)
+- Missing required fields
+- Special characters in names
+
+-------------------------------------------------------------------------------
+INTEGRATION TESTS
+-------------------------------------------------------------------------------
+
+Test Complete Workflows:
+- Search → Select → Book → Pay → Confirm
+- Book → Cancel → Refund
+- Reserve → Timeout → Release
+- Payment failure → Seat release
+
+Test Database Transactions:
+- Verify atomicity of booking confirmation
+- Test rollback on payment failure
+- Verify seat locking prevents double booking
+- Test concurrent reservation attempts
+
+Test API Endpoints:
+- Search returns correct results
+- Reservation creates correct records
+- Payment intent creation works
+- Webhook processing confirms booking
+
+-------------------------------------------------------------------------------
+END-TO-END TESTS
+-------------------------------------------------------------------------------
+
+Test Real User Journeys:
+- Complete happy path from search to booking
+- Test payment with test cards
+- Verify emails are sent
+- Check PDF generation
+- Test cancellation flow
+
+Test Across Devices:
+- Desktop browsers
+- Mobile browsers
+- Different screen sizes
+- Various browsers (Chrome, Safari, Firefox)
+
+-------------------------------------------------------------------------------
+PAYMENT TESTING
+-------------------------------------------------------------------------------
+
+Use Stripe Test Mode:
+- Test successful payments (card: 4242 4242 4242 4242)
+- Test declined payments (card: 4000 0000 0000 0002)
+- Test authentication required (card: 4000 0025 0000 3155)
+- Test expired card (card: 4000 0000 0000 0069)
+
+Test Webhook Delivery:
+- Successful payment webhook
+- Failed payment webhook
+- Delayed webhook (simulate network issues)
+- Duplicate webhooks (test idempotency)
+
+Test Refund Scenarios:
+- Full refund
+- Partial refund
+- Refund after cancellation
+- Multiple refunds on same booking
+
+
+================================================================================
+6. PRIORITY ROADMAP
+================================================================================
+
+Here's the order to build everything to maintain momentum and see progress.
+
+-------------------------------------------------------------------------------
+WEEK 1-2: SEARCH & AVAILABILITY
+-------------------------------------------------------------------------------
+Focus: Get trains showing up based on user search
+
+Tasks:
+- Create database schema for trains and routes
+- Build search API endpoint
+- Implement filtering logic (date, route, class)
+- Create availability checker
+- Handle passenger count in pricing
+- Build search results page
+- Add loading states
+- Implement error handling
+
+Deliverable: User can search and see available trains with pricing
+
+-------------------------------------------------------------------------------
+WEEK 3-4: SEAT SELECTION & RESERVATION
+-------------------------------------------------------------------------------
+Focus: Users can select seats that are temporarily held
+
+Tasks:
+- Design seat map schema
+- Build visual seat map component
+- Implement seat selection UX
+- Create reservation API endpoint
+- Add database row locking
+- Build background job for expired reservations
+- Add reservation countdown timer
+- Handle race conditions
+
+Deliverable: User can select seats that are held for 10 minutes
+
+-------------------------------------------------------------------------------
+WEEK 5-6: PASSENGER FORMS & VALIDATION
+-------------------------------------------------------------------------------
+Focus: Collect passenger information correctly
+
+Tasks:
+- Build passenger info form
+- Implement client-side validation
+- Add server-side validation
+- Handle multiple passengers
+- Add special requirements options
+- Create booking summary page
+- Calculate final pricing with taxes
+- Store passenger data securely
+
+Deliverable: Complete booking data collected and validated
+
+-------------------------------------------------------------------------------
+WEEK 7-8: PAYMENT INTEGRATION
+-------------------------------------------------------------------------------
+Focus: Accept payments securely
+
+Tasks:
+- Set up Stripe account (test mode)
+- Install Stripe libraries
+- Create payment intent API endpoint
+- Build checkout page with Stripe Elements
+- Implement payment submission
+- Set up webhook endpoint
+- Test webhook signature verification
+- Handle payment success flow
+- Handle payment failure flow
+- Update booking status on success
+
+Deliverable: Users can pay and payments are processed correctly
+
+-------------------------------------------------------------------------------
+WEEK 9-10: CONFIRMATION & TICKETS
+-------------------------------------------------------------------------------
+Focus: Users get confirmation and can use their ticket
+
+Tasks:
+- Build booking confirmation page
+- Set up email service (Resend/SendGrid)
+- Create email templates
+- Send confirmation emails
+- Generate PDF tickets with QR codes
+- Create "My Bookings" page
+- Display booking history
+- Allow viewing ticket details
+- Implement booking search by reference
+
+Deliverable: Users receive confirmation and can access their tickets
+
+-------------------------------------------------------------------------------
+WEEK 11-12: CANCELLATION & REFUNDS
+-------------------------------------------------------------------------------
+Focus: Handle cancellations properly
+
+Tasks:
+- Implement cancellation policy logic
+- Build cancellation request flow
+- Calculate refund amounts
+- Create refund API integration
+- Update booking status
+- Release seats on cancellation
+- Send cancellation emails
+- Handle edge cases
+- Build admin review for disputes
+- Add cancellation analytics
+
+Deliverable: Complete cancellation system with automated refunds
+
+
+================================================================================
+7. KEY TECHNOLOGIES NEEDED
+================================================================================
+
+Core Stack:
+- Next.js with TypeScript (strict mode)
+- PostgreSQL database
+- Redis for caching and sessions
+- Node.js for backend API
+
+Payment:
+- Stripe (payment processing)
+- Stripe Elements (UI components)
+- Webhook handling
+
+State Management:
+- Zustand (lightweight state management)
+- TanStack Query (data fetching and caching)
+
+Validation:
+- Zod (schema validation)
+- React Hook Form (form handling)
+
+Background Jobs:
+- Bull or BullMQ (job queues)
+- Redis (queue backend)
+
+Email:
+- Resend or SendGrid (email delivery)
+- React Email (email templates)
+
+PDF Generation:
+- jsPDF or PDFKit
+- QR code library for tickets
+
+Date Handling:
+- date-fns (date manipulation)
+- Never use native Date for calculations
+
+Testing:
+- Vitest (unit tests)
+- Playwright (E2E tests)
+- MSW (API mocking)
+
+Monitoring:
+- Sentry (error tracking)
+- LogRocket (session replay)
+
+
+================================================================================
+FINAL NOTES
+================================================================================
+
+Focus on These Three Things:
+1. Seat reservation with proper locking (prevents double booking)
+2. Atomic booking confirmation (payment + seats updated together)
+3. Reliable webhook handling (confirms payments correctly)
+
+Get these three right and everything else falls into place.
+
+Common Mistakes to Avoid:
+- Trusting frontend calculations (validate server-side)
+- Not handling race conditions (use database locks)
+- Ignoring webhook security (verify signatures)
+- Poor error messages (be specific and helpful)
+- No timeout on reservations (seats stay locked forever)
+- Missing state transitions (booking gets stuck)
+- Not testing payment failures (most users don't know their card is declined)
+
+This is the core of your application. Build this well and you have something 
+genuinely impressive and production-ready.
+
+================================================================================
+END OF DOCUMENT
+================================================================================
