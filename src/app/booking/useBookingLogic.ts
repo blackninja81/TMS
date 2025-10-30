@@ -95,7 +95,7 @@ export const useBookingLogic = () => {
       if (next.length > adults) next.length = adults;
       return next;
     });
-  }, [children]);
+  }, [adults]);
 
   useEffect(() => {
     setChildDetails((prev) => {

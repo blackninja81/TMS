@@ -50,7 +50,7 @@ const TripDetailsForm: React.FC<{ booking: BookingHook }> = ({ booking }) => {
       </div>
 
       <div className="form-row">
-        <select value={tripType} onChange={(e) => setTripType(e.target.value as any)} disabled={isSubmitting}>
+        <select value={tripType} onChange={(e) => setTripType(e.target.value as "one-way" | "return")} disabled={isSubmitting}>
           <option value="one-way">One-way</option>
           <option value="return">Return</option>
         </select>
