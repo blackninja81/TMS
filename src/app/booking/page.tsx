@@ -3,11 +3,11 @@
 
 import React from "react";
 import "./booking.scss";
-import { useBookingLogic } from "./useBookingLogic";
-import ContactInfoForm from "./ContactInfoForm";
-import TripDetailsForm from "./TripDetailsForm";
-import TravellersForm from "./TravellersForm";
-import SeatSelection from "./SeatSelection";
+import { useBookingLogic } from "./hooks/useBookingLogic";
+import ContactInfoForm from "./components/ContactInfoForm";
+import TripDetailsForm from "./components/TripDetailsForm";
+import TravellersForm from "./components/TravellersForm";
+import SeatSelection from "./components/SeatSelection";
 
 const BookingPage: React.FC = () => {
   const booking = useBookingLogic();

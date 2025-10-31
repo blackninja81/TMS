@@ -2,7 +2,8 @@
 "use client";
 
 import React from "react";
-import type { BookingHook } from "./useBookingLogic";
+import type { BookingHook } from "../hooks/useBookingLogic";
+
 
 const TravellersForm: React.FC<{ booking: BookingHook }> = ({ booking }) => {
   const {

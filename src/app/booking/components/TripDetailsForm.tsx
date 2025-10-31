@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import type { BookingHook } from "./useBookingLogic";
+import type { BookingHook } from "../hooks/useBookingLogic";
+import type { TimeSlot } from "../types/booking";
 
 const TripDetailsForm: React.FC<{ booking: BookingHook }> = ({ booking }) => {
   const {
@@ -63,7 +64,7 @@ const TripDetailsForm: React.FC<{ booking: BookingHook }> = ({ booking }) => {
       </div>
 
       <div className="form-row">
-        <select value={preferredTime} onChange={(e) => setPreferredTime(e.target.value)} required disabled={isSubmitting}>
+        <select value={preferredTime} onChange={(e) => setPreferredTime(e.target.value as TimeSlot | "")} required disabled={isSubmitting}>
           <option value="">Select Preferred Time</option>
           {availableTimes.length > 0 ? (
             availableTimes.map((t) => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)
@@ -104,7 +105,7 @@ const TripDetailsForm: React.FC<{ booking: BookingHook }> = ({ booking }) => {
           )}
 
           <div className="form-row">
-            <select value={returnTime} onChange={(e) => setReturnTime(e.target.value)} required disabled={isSubmitting || getAvailableReturnTimes(preferredTime).length === 0}>
+            <select value={returnTime} onChange={(e) => setReturnTime(e.target.value as TimeSlot | "")} required disabled={isSubmitting || getAvailableReturnTimes(preferredTime).length === 0}>
               <option value="">Select Return Time</option>
               {getAvailableReturnTimes(preferredTime).map((t) => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
             </select>
